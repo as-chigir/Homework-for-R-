@@ -1,0 +1,163 @@
+---
+title: "Домашнее задание"
+output:
+  pdf_document:
+    latex_engine: xelatex
+mainfont: CMU Serif
+header-includes:
+- \usepackage[russian]{babel}
+- \usepackage{hyperref}
+- \hypersetup{colorlinks = true, urlcolor = blue, linkcolor=magenta}
+---
+
+# Задачи
+
+## Задача 1
+
+Загрузите данные с листа `Rental` файла *Texas Rental* и сохраните их в датафрейм `rental`. 
+
+*Ответ:*
+
+```{r}
+rental <- read_sheet("https://docs.google.com/spreadsheets/d/1MGc0iqP_XSDN-BcJjnnGg3GEXXXl45AoKldDgy5x9PI/edit#gid=0", sheet = "Rental")
+
+```
+
+\newpage
+
+## Задача 2
+Преобразуйте столбец `average_rate_per_night` таким образом, чтобы он содержал только числа без символа `$` и имел целочисленный тип. 
+
+**Подсказка.** Если планируете избавляться от символов `$` с помощью замены, обратите внимание на то, что этот символ является специальным оператором в регулярных выражениях, поэтому его необходимо экранировать с помощью `\\`.
+
+*Ответ:*
+
+```{r}
+rental <- rental %>% separate(col = average_rate_per_night,
+                              into = c(NA, "average_rate_per_night"),
+                              sep = "\\$")
+rental$average_rate_per_night <- as.integer(rental$average_rate_per_night)
+```
+
+\newpage
+
+## Задача 3
+
+Замените значения *Studio* в столбце `bedrooms_count` на значения 0 и преобразуйте тип этого столбца в целочисленный.
+
+*Ответ:*
+
+```{r}
+rental$bedrooms_count <- replace(rental$bedrooms_count, rental$bedrooms_count == "Studio", 0)
+rental$bedrooms_count <- unlist(rental$bedrooms_count)
+```
+
+\newpage
+
+## Задача 4
+
+Разбейте столбец `date_of_listing` на два столбца, `month_listing` и `year_listing`. Столбец `month_listing` должен содержать месяц добавления жилого объекта на Airbnb (строковый тип), а столбец `year_listing` должен содержать год добавления жилого объекта на Airbnb (целочисленный тип).
+
+*Ответ:*
+
+```{r}
+rental <- rental %>% separate(col = date_of_listing,
+                              into = c("month_listing", "year_listing"),
+                              remove = FALSE)
+rental$year_listing <- as.integer(rental$year_listing)
+```
+
+\newpage
+
+## Задача 5
+
+Загрузите данные с листа *Texas* файла *Texas Rental* и сохраните их в датафрейм `texas`. 
+
+*Ответ:*
+
+```{r}
+texas <- read_sheet("https://docs.google.com/spreadsheets/d/1MGc0iqP_XSDN-BcJjnnGg3GEXXXl45AoKldDgy5x9PI/edit#gid=0", sheet = "Texas")
+
+```
+
+\newpage
+
+## Задача 6
+
+Проверьте тип столбца `population`. Если тип не числовой, исправьте это.
+
+*Ответ:*
+
+```{r}
+str(texas$population)
+texas$population <- as.numeric(texas$population)
+```
+
+\newpage
+
+## Задача 7
+
+Объедините датафреймы `rental` и `texas` таким образом, чтобы в итоговом датафрейме были данные по всем представленным на Airbnb жилым объектам в Техасе и для каждого жилого объекта была указана численность населения в городе, где он находится. Назовите полученный датафрейм `final`.
+
+*Ответ:*
+
+```{r}
+final <- left_join(texas, rental, by = "city")
+```
+
+\newpage
+
+## Задача 8
+
+Удалите строки с пропущенными значениями в датафрейме `final`.
+
+*Ответ:*
+
+```{r}
+final <- na.omit(final)
+```
+
+\newpage
+
+## Задача 9
+
+Выберите 10 самых крупных по численности населения городов штата Техас, используя только датафрейм `final`.
+
+**Подсказка.** Может пригодиться функция `distinct` для выбора уникальных значений.
+
+*Ответ:*
+
+```{r}
+final %>%  group_by(city) %>% summarise(`Population` = mean(population)) %>% top_n(10, Population)
+-- final %>% arrange(desc(population)) %>% distinct(city) %>% head(10)
+```
+
+\newpage
+
+## Задача 10
+
+Сгруппируйте строки в датафрейме `final` по названию города и сформируйте таблицу с минимальной и максимальной средней ценой аренды за ночь для 10 самых крупных по численности населения городов штата Техас. Сохраните результат в переменную `texas_sum`.
+
+*Ответ:*
+
+```{r}
+texas_sum <- final %>% group_by(city) %>% summarise(`Population` = mean(population),
+                                       `Min cost` = min(average_rate_per_night),
+                                       `Max cost` = max(average_rate_per_night)) %>% top_n(10, Population)
+```
+
+\newpage
+
+## Задача 11
+
+Измените структуру таблицы `texas_sum` таким образом, чтобы в таблице было два столбца: название города и минимальная/максимальная средняя цена аренды за ночь (одно значение под другим для каждого города, *long format*).
+
+*Ответ:*
+
+```{r}
+str(texas_sum)
+texas_sum %>% select(-Population) %>% gather("Cost", "Price", 2:3) %>% select(-Cost) %>% arrange(city)
+
+```
+
+\newpage
