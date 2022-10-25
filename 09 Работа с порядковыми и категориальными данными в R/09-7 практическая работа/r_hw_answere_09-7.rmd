@@ -1,0 +1,172 @@
+---
+title: "Untitled"
+author: "Alexandra Chigir"
+date: "19 10 2022"
+output: pdf_document
+---
+
+## Задачи
+
+### Задача 1
+
+Загрузите в R данные из файла `sleep.csv`, сохраните их в датафрейм `sleep_surv`. При загрузке сделайте так, чтобы все текстовые столбцы считались как факторные.
+
+*Ответ:*
+
+```{r}
+setwd("C:/Users/alexandra_c/Desktop/Уроки R/Практические задания/09 Работа с порядковыми и категориальными данными в R/09-7 практическая работа")
+sleep_surv <- read.csv("sleep.csv", stringsAsFactors = TRUE)
+```
+
+\newpage
+
+### Задача 2
+
+Выведите на экран уровни показателя `marital`. 
+
+
+*Ответ:*
+
+```{r}
+levels(sleep_surv$marital)
+```
+
+\newpage
+
+
+### Задача 3
+
+Измените уровни показателя `marital` таким образом, чтобы они были упорядочены в соответствии с перечнем значений, представленным в описании данных.
+
+*Ответ:*
+
+```{r}
+library(tidyverse)
+sleep_surv <- sleep_surv %>% mutate(marital = factor(marital,
+                                                     levels = c("single", "married/defacto", "divorced", "widowed"),
+                                                     ordered = TRUE))
+str(sleep_surv$marital)
+levels(sleep_surv$marital)
+
+```
+\newpage
+
+### Задача 4
+
+Выведите на экран частоты значений в столбце `edlevel`. 
+
+**Подсказка.** Функция `table()`. 
+
+*Ответ:*
+
+```{r}
+table(sleep_surv$edlevel)
+```
+
+\newpage
+
+### Задача 5
+
+Измените уровни показателя `edlevel` так, чтобы они были упорядочены в соответствии с перечнем значений, представленным в описании данных. Выведите на экран частоты значений в столбце `edlevel`. Чем отличается результат этой операции от результата задачи 4? Приведите ответ на вопрос.
+
+*Ответ:*
+
+```{r}
+sleep_surv <- sleep_surv %>% mutate(edlevel = factor(edlevel,
+                                                     levels = c("primary school",
+                                                                "secondary school",
+                                                                "trade training/ post secondary training",
+                                                                "undergraduate degree",
+                                                                "postgraduate degree"),
+                                                     ordered = TRUE))
+table(sleep_surv$edlevel)
+# при выводе на экран частот значений в задаче 5,
+# мы видим что уровни расположены в определеном порядке, заданном нами.
+```
+
+\newpage
+
+### Задача 6
+
+Сделайте показатель `qualslp` упорядоченным фактором, считая, что значения должны быть упорядочены от самого худшего к самому лучшему.
+
+*Ответ:*
+
+```{r}
+sleep_surv <- sleep_surv %>% mutate(qualslp = factor(qualslp,
+                                                     levels = c("very poor","poor", "fair", "good", "very good", "excellent"),
+                                                     ordered = TRUE))
+```
+
+\newpage
+
+### Задача 7
+
+Выберите из датафрейма `sleep_surv` строки, соответствующие курящим людям. Сохраните их в датафрейм `sleep_smoke`. 
+
+*Ответ:*
+
+```{r}
+sleep_smoke <- sleep_surv %>% filter(smoke == "yes")
+```
+
+\newpage
+
+### Задача 8
+
+Используя датафрейм `sleep_smoke`, определите, чему равны минимальное и максимальное значения показателя качества сна. Выясните, какое из значений качества сна у курящих людей встречается чаще всего. 
+
+*Ответ:*
+
+```{r}
+levels(sleep_smoke$qualslp)
+# мин значение показателя качества сна - very poor, макс - excellent
+
+table(sleep_smoke$qualslp)
+# чаще всего встречается показательсна - good
+```
+
+\newpage
+
+### Задача 9
+
+Используя возможности `tidyverse`, сделайте так, чтобы значения с частотой ниже 30 в столбце `marital` были закодированы с помощью слова other. Проверьте, какие значения превратились в other, и запишите свой ответ.
+
+*Ответ:*
+
+```{r}
+library(tidyverse)
+sleep_surv <- sleep_surv %>% mutate(marital = fct_lump_min(marital, 30))
+levels(sleep_surv$marital)
+# значения "divorced" и "widowed" превратились в Other
+```
+\newpage
+
+### Задача 10 
+
+Сделайте столбец smoke целочисленным так, чтобы значение 0 соответствовало некурящим людям, а 1 — курящим людям. 
+
+*Ответ:*
+
+```{r}
+str(sleep_surv$smoke)
+library(tidyverse)
+sleep_surv <- sleep_surv %>% fill(smoke, .direction = "down") # заполнение значения NA
+sleep_surv$smoke <- ifelse(sleep_surv$smoke == "yes", 1, 0) # замена значений в столбце
+str(sleep_surv)
+sleep_surv <- sleep_surv %>% mutate(smoke = as.integer(smoke)) # перевод из факт типа в целочисленный
+```
+
+\newpage
+
+### Задача 11 
+
+Выгрузите обновлённый датафрейм `sleep_surv` в файл `sleep-new.csv`. 
+
+*Ответ:*
+
+```{r}
+write.csv(sleep_surv, "sleep-new.csv")
+```
+
+\newpage
