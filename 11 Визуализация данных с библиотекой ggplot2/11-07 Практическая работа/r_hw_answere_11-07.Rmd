@@ -129,14 +129,16 @@ ggplot(data = psy, aes(x = sex)) +
 
 ```{r}
 cols <- c('yellow', 'green')
-  
-ggplot(data = psy, aes(x = factor(1), y = volunteer, fill = volunteer)) +
+
+psy_group <- psy %>% group_by(volunteer) %>% tally
+
+ggplot(data = psy_group, aes(x = factor(1), y = n, fill = volunteer)) +
   geom_bar(stat = "Identity", width = 1) +
   coord_polar("y") + 
   scale_fill_manual(values = cols) +
   theme_gray()
 
-# по диаграмме видно, что доля респондентов, принимающих участие в волонтерских программах, больше
+# по диаграмме видно, что доля респондентов, НЕ принимающих участие в волонтерских программах, больше
 ```
 
 \newpage
